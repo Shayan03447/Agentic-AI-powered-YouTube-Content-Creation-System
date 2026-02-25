@@ -1,0 +1,15 @@
+# Core libraries
+streamlit==1.27.0          # Web app UI
+openai==1.12.0              # OpenAI API client
+tavily-python==0.7.0              # Tavily search API client
+
+# Agent orchestration
+langchain==0.3.27         # LangChain for wrapping agents
+langgraph==0.4.10           # LangGraph for workflow orchestration
+
+# Utilities
+python-dotenv==1.0.0       # Environment variables support
+requests==2.31.0           # HTTP requests
+
+# Optional for testing
+pytest==8.2.0              # Unit tests
