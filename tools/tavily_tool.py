@@ -74,7 +74,4 @@ def tavily_search(
         results = []
     return {"results": results, "answer":answer, "error": None}
 
-if __name__ == "__main__":
-    client = _get_client()
-    result = client.search("Python programming")
-    print(result)
+
