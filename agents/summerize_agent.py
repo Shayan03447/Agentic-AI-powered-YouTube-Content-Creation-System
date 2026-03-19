@@ -17,6 +17,7 @@ DEFAULT_STRUCTURED_INSIGHTS = {
     "facts_or_stats": [],
     "angles": [],
     "cta_ideas": [],
+}
 def _build_sources_text(sources: list[dict]) -> str:
     """Turn research sources into one text block for the LLM"""
     parts = []
@@ -34,12 +35,12 @@ def summarize_agent(research_result: dict[str, Any]) -> dict[str, Any]:
     query= (research_result or {}).get("query") or ""
     sources= (research_result or {}).get("sources") or []
     sources_text = _build_sources_text(sources)
-    sources_used=[s.get("url") or "" for s in sources is s.get("url")]
+    sources_used=[s.get("url") or "" for s in sources if  s.get("url")]
     if not sources_text.strip():
         return {
             "query": query,
             "summary": "No source content available to summarize.",
-            "structures_insights": dict(DEFAULT_STRUCTURED_INSIGHTS),
+            "structured_insights": dict(DEFAULT_STRUCTURED_INSIGHTS),
             "sources_used": sources_used,
         }
     system = """You are summarizing web research for a YouTube script writer.
@@ -58,7 +59,7 @@ All list fields must be arrays of strings; use empty arrays if not applicable.""
     user_contet= f"Topic: {query}\n\nResearch content:\n{sources_text}"
 
     try:
-        r=client.chat.completion.create(
+        r=client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system","content":system},
@@ -66,7 +67,7 @@ All list fields must be arrays of strings; use empty arrays if not applicable.""
             ],
             response_format={"type": "json_object"}
         )
-        raw = (r.choices[0].messages.content or "").strip()
+        raw = (r.choices[0].message.content or "").strip()
         data= json.loads(raw) if raw else {}
     except Exception as e:
         logger.exception("Summarize LLM or JSON parse failed: %s", e)
@@ -85,8 +86,14 @@ All list fields must be arrays of strings; use empty arrays if not applicable.""
         "query":query,
         "summary":summary,
         "structured_insights": si,
-        "sources_used": source_used,
+        "sources_used": sources_used,
     }       
+if __name__ == "__main__":
+    from agents.research_agent import research_agent
+    test_query = "best practices for youtube video scripting 2024 "
+    research_result= research_agent(test_query)
+    out=summarize_agent(research_result)
+    print(json.dumps(out, indent=2, default=str))
 
 
 
