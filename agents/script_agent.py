@@ -29,5 +29,10 @@ def _format_insights_for_prompt(structured: dict[str, Any]) -> str:
         ("angles", "Angles / POVs"),
         ("cta_ideas", "CTA ideas"),
     ]:
-    
+        items = structured.get(key) or []
+        if not isinstance(items, list):
+            items = []
+        items = []
+        lines.append(f"{label}:\n" + "\n".join(f" - {x}" for x in items) or f" (none)")
+
 
