@@ -32,7 +32,8 @@ def _format_insights_for_prompt(structured: dict[str, Any]) -> str:
         items = structured.get(key) or []
         if not isinstance(items, list):
             items = []
-        items = []
         lines.append(f"{label}:\n" + "\n".join(f" - {x}" for x in items) or f" (none)")
+    return "\n\n".join(lines)
 
-
+def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
+    query=(summarize_output or {}).get("query") or ""
