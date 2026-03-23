@@ -37,3 +37,24 @@ def _format_insights_for_prompt(structured: dict[str, Any]) -> str:
 
 def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
     query=(summarize_output or {}).get("query") or ""
+    summary=(summarize_output or {}).get("summary") or ""
+    structured=(summarize_output or {}).get("structured_insights") or {}
+    sources_used=(summarize_output or {}).get("sources_used") or []
+    insights_text=_format_insights_for_prompt(structured)
+
+    system="""You write tight, engaging SHORT-FOAM  youtube scripts (roughly 60-90 seconds spoken).
+    USe only the provided summary and structured insights; do not invent new factual claims..
+    if a fact is missing, speak in general terms or skip it .
+
+    Return valid json only, no markdown, with this shape:
+    {
+    "title":"catchy working title",
+    "hook":"first 5-15 seconds, spoken",
+    "beats":["beat 1 line", "beat 2 line", "....."],
+    "main_script":"full continuous script the host reads",
+    "cta":"subscribe/comment/link line",
+    "hashtag_suggestions":["#tag1", "#tag2"]
+    }
+
+    """
+
