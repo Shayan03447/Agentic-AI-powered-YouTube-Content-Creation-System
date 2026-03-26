@@ -96,10 +96,20 @@ def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
         out["beats"]=[]
 
     return {
-        "query":querym
+        "query":query,
         "script_json": out,
         "main_script": out.get("main_script") or "",
         "sources_used": sources_used,
     }
+
+if __name__ == "__main__":
+    from agents.research_agent import research_agent
+    from agents.summerize_agent import summarize_agent
+
+    q= "best practice for youtube video scripting 2024"
+    research= research_agent(q)
+    summarized= summarize_agent(research)
+    script = script_agent(summarized)
+    print(json.dump(script, indent=2, ensure_ascii=False))
 
 
