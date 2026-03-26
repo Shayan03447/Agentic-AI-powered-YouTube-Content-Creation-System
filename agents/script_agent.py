@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any
 from dotenv import load_dotenv
-from openai import openai
+from openai import OpenAI
 
 load_dotenv()
 logger= logging.getLogger(__name__)
@@ -35,7 +35,7 @@ def _format_insights_for_prompt(structured: dict[str, Any]) -> str:
         lines.append(f"{label}:\n" + "\n".join(f" - {x}" for x in items) or f" (none)")
     return "\n\n".join(lines)
 
-def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
+def script_agent(summarize_output: dict[str, Any]) -> dict[str,Any]:
     query=(summarize_output or {}).get("query") or ""
     summary=(summarize_output or {}).get("summary") or ""
     structured=(summarize_output or {}).get("structured_insights") or {}
@@ -43,34 +43,34 @@ def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
     insights_text=_format_insights_for_prompt(structured)
 
     system="""You write tight, engaging SHORT-FOAM  youtube scripts (roughly 60-90 seconds spoken).
-    USe only the provided summary and structured insights; do not invent new factual claims..
-    if a fact is missing, speak in general terms or skip it .
+USe only the provided summary and structured insights; do not invent new factual claims..
+if a fact is missing, speak in general terms or skip it .
 
-    Return valid json only, no markdown, with this shape:
-    {
-    "title":"catchy working title",
-    "hook":"first 5-15 seconds, spoken",
-    "beats":["beat 1 line", "beat 2 line", "....."],
-    "main_script":"full continuous script the host reads",
-    "cta":"subscribe/comment/link line",
-    "hashtag_suggestions":["#tag1", "#tag2"]
-    }
-    beats should be 4-8 short items; main_script should flow naturally when read aloud
-    """
-        user=f"""Topic : {query}
+Return valid json only, no markdown, with this shape:
+{
+ "title":"catchy working title",
+ "hook":"first 5-15 seconds, spoken",
+ "beats":["beat 1 line", "beat 2 line", "....."],
+ "main_script":"full continuous script the host reads",
+ "cta":"subscribe/comment/link line",
+ "hashtag_suggestions":["#tag1", "#tag2"]
+}
+beats should be 4-8 short items; main_script should flow naturally when read aloud
+"""
+    user=f"""Topic : {query}
     
-    summary:
-    {summary}
+summary:
+{summary}
 
-    structured insights
-    {insights_text}
+structured insights
+{insights_text}
 
-    source URLs (for your awareness only; do not read the web):
-    {json.dumps(sources_used, ensure_ascii=False)}
-    """
+source URLs (for your awareness only; do not read the web):
+{json.dumps(sources_used, ensure_ascii=False)}
+"""
 
     try:
-         r=client.chat.completions.create(
+        r=client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system","content": system},
@@ -78,10 +78,10 @@ def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
             ],
             response_format={"type": "json_object"},
         )
-        raw=(r.choice[0].message.content or "").strip()
+        raw=(r.choices[0].message.content or "").strip()
         data=json.loads(raw) if raw else {}
     except Exception as e:
-        logger.exception("Script LLM or JSON parse failed: %s")
+        logger.exception("Script LLM or JSON parse failed: %s", e)
         return {
             "query":query,
             "error": str(e),
@@ -110,6 +110,6 @@ if __name__ == "__main__":
     research= research_agent(q)
     summarized= summarize_agent(research)
     script = script_agent(summarized)
-    print(json.dump(script, indent=2, ensure_ascii=False))
+    print(json.dumps(script, indent=2, ensure_ascii=False))
 
 
