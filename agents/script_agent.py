@@ -55,6 +55,51 @@ def script_agent_langchain(summarize_output: dict[str, Any]) -> dict[str,Any]:
     "cta":"subscribe/comment/link line",
     "hashtag_suggestions":["#tag1", "#tag2"]
     }
-
+    beats should be 4-8 short items; main_script should flow naturally when read aloud
     """
+        user=f"""Topic : {query}
+    
+    summary:
+    {summary}
+
+    structured insights
+    {insights_text}
+
+    source URLs (for your awareness only; do not read the web):
+    {json.dumps(sources_used, ensure_ascii=False)}
+    """
+
+    try:
+         r=client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system","content": system},
+                {"role": "user", "content": user},
+            ],
+            response_format={"type": "json_object"},
+        )
+        raw=(r.choice[0].message.content or "").strip()
+        data=json.loads(raw) if raw else {}
+    except Exception as e:
+        logger.exception("Script LLM or JSON parse failed: %s")
+        return {
+            "query":query,
+            "error": str(e),
+            "script_json": dict(DEFAULT_SCRIPT_STRUCTURE),
+            "sources_used": sources_used,
+        }
+    out = dict(DEFAULT_SCRIPT_STRUCTURE)
+    for k in out:
+        if k in data and data[k] is not None:
+            out[k]= data[k]
+    if not isinstance(out["beats"], list):
+        out["beats"]=[]
+
+    return {
+        "query":querym
+        "script_json": out,
+        "main_script": out.get("main_script") or "",
+        "sources_used": sources_used,
+    }
+
 
